@@ -3,7 +3,7 @@ name: Duplicater
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # JST 6:00
+    - cron: '0 21 * * *' # daily at JST 6:00 (UTC 21:00)
 
 env:
   SID: ${{ secrets.SID }}
