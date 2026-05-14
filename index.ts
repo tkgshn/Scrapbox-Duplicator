@@ -40,19 +40,27 @@ const importingPages = pages.filter(({ lines }) => {
 if (importingPages.length === 0) {
   console.log("No page to be imported found.");
 } else {
-  console.log(
-    `Importing ${importingPages.length} pages to "/${importingProjectName}"...`,
+  const chunkSize = Number(Deno.env.get("IMPORT_CHUNK_SIZE") ?? 200);
+  const chunks = Array.from(
+    { length: Math.ceil(importingPages.length / chunkSize) },
+    (_, i) => importingPages.slice(i * chunkSize, (i + 1) * chunkSize),
   );
-  const result = await importPages(importingProjectName, {
-    pages: importingPages,
-  }, {
-    sid,
-  });
-  if (!result.ok) {
-    const error = new Error();
-    error.name = `${result.value.name} when importing pages`;
-    error.message = result.value.message;
-    throw error;
+  console.log(
+    `Importing ${importingPages.length} pages to "/${importingProjectName}" in ${chunks.length} chunk(s) of up to ${chunkSize}...`,
+  );
+  for (const [i, chunk] of chunks.entries()) {
+    console.log(`  [${i + 1}/${chunks.length}] importing ${chunk.length} pages...`);
+    const result = await importPages(importingProjectName, {
+      pages: chunk,
+    }, {
+      sid,
+    });
+    if (!result.ok) {
+      const error = new Error();
+      error.name = `${result.value.name} when importing pages (chunk ${i + 1}/${chunks.length})`;
+      error.message = result.value.message;
+      throw error;
+    }
+    console.log(`  [${i + 1}/${chunks.length}] ok:`, result.value);
   }
-  console.log(result.value);
 }
